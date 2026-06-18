@@ -38,6 +38,7 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
   return (
     <Card
       elevation={isRead ? 0 : 2}
+      onClick={() => !isRead && onToggleRead(ID)}
       sx={{
         borderLeft: `6px solid ${config.borderColor}`,
         borderRadius: 2,
@@ -45,9 +46,10 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
         transition: "all 0.2s ease-in-out",
         opacity: isRead ? 0.85 : 1,
         position: "relative",
+        cursor: isRead ? "default" : "pointer",
         "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: 3,
+          transform: isRead ? "none" : "translateY(-2px)",
+          boxShadow: isRead ? 1 : 3,
         },
       }}
     >
@@ -94,8 +96,15 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
         </Box>
 
         <Box sx={{ flexShrink: 0 }}>
-          <Tooltip title={isRead ? "Mark as Unread" : "Mark as Read"}>
-            <IconButton onClick={() => onToggleRead(ID)} size="small" color={isRead ? "default" : "primary"}>
+          <Tooltip title={isRead ? "Mark as New" : "Mark as Viewed"}>
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleRead(ID);
+              }}
+              size="small"
+              color={isRead ? "default" : "primary"}
+            >
               {isRead ? (
                 <DraftsIcon sx={{ fontSize: 20, color: "text.secondary" }} />
               ) : (

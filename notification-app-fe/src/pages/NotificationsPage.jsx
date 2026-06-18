@@ -204,7 +204,7 @@ export function NotificationsPage() {
             onClick={handleMarkAllRead}
             sx={{ textTransform: "none", borderRadius: 2 }}
           >
-            Mark Visible as Read
+            Mark Visible as Viewed
           </Button>
         )}
       </Stack>
