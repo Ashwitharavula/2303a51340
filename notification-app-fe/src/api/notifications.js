@@ -36,10 +36,9 @@ async function getAuthToken() {
     const data = await res.json();
     tokenCache = {
       token: data.access_token,
-      expiresAt: data.expires_in || (now + 3600), // Default 1 hour if not specified
+      expiresAt: data.expires_in || (now + 3600),
     };
 
-    // Configure the logging middleware with the new token
     setupLogger({ token: data.access_token, baseUrl: BASE_URL });
     
     await Log("frontend", "info", "auth", "Frontend authenticated successfully.");
@@ -51,10 +50,6 @@ async function getAuthToken() {
   }
 }
 
-/**
- * Fetch notifications from the evaluation service.
- * Supports limit, page, and notification_type parameters.
- */
 export async function fetchNotifications({ page = 1, limit = 10, type = "" } = {}) {
   try {
     const token = await getAuthToken();
@@ -82,13 +77,8 @@ export async function fetchNotifications({ page = 1, limit = 10, type = "" } = {
     const data = await res.json();
     await Log("frontend", "info", "api", `Loaded ${data.notifications?.length || 0} items.`);
 
-    // Returns total count and list of notifications
     return {
       notifications: data.notifications || [],
-      // The API returns total notifications or we calculate page items
-      // Let's assume pagination info is sent. The endpoint provides paginated notifications.
-      // If we don't have total count in response, we calculate it or infer it.
-      // Typically, the evaluation service returns a set of notifications. Let's return raw data.
       total: data.total || (data.notifications || []).length, 
     };
   } catch (error) {

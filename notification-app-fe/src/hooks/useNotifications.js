@@ -2,18 +2,11 @@ import { useState, useEffect } from "react";
 import { fetchNotifications } from "../api/notifications";
 import { Log } from "../../../logging-middleware/index.js";
 
-/**
- * Custom hook to load notifications and handle filters & pagination.
- * @param {Object} params
- * @param {number} params.page - Current page number
- * @param {number} params.limit - Max notifications to load
- * @param {string} params.type - Filter type: 'All' | 'Placement' | 'Result' | 'Event'
- */
 export function useNotifications({ page = 1, limit = 10, type = "All" } = {}) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [totalPages, setTotalPages] = useState(10); // Start with default 10 pages
+  const [totalPages, setTotalPages] = useState(10);
 
   useEffect(() => {
     let active = true;
@@ -29,7 +22,6 @@ export function useNotifications({ page = 1, limit = 10, type = "All" } = {}) {
         if (active) {
           setNotifications(data.notifications || []);
           
-          // Dynamically adjust total pages based on whether we received a full page of items
           if ((data.notifications || []).length < limit) {
             setTotalPages(page);
           } else {

@@ -34,7 +34,7 @@ const typeWeights = {
 };
 
 export function NotificationsPage() {
-  const [activeTab, setActiveTab] = useState(0); // 0 = All Feed, 1 = Priority Inbox
+  const [activeTab, setActiveTab] = useState(0);
   const [filter, setFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [priorityLimit, setPriorityLimit] = useState(10);
@@ -47,24 +47,20 @@ export function NotificationsPage() {
     }
   });
 
-  // Priority Inbox states
   const [priorityNotifications, setPriorityNotifications] = useState([]);
   const [priorityLoading, setPriorityLoading] = useState(false);
   const [priorityError, setPriorityError] = useState(null);
 
-  // Load paginated data for All Feed Tab
   const { notifications, totalPages, loading, error } = useNotifications({
     page,
     limit: 10,
     type: filter,
   });
 
-  // Sync viewed IDs with localStorage
   useEffect(() => {
     localStorage.setItem("viewed_notifications", JSON.stringify(viewedIds));
   }, [viewedIds]);
 
-  // Load & calculate Priority Inbox data (Tab 1)
   useEffect(() => {
     if (activeTab !== 1) return;
 
@@ -74,7 +70,7 @@ export function NotificationsPage() {
       setPriorityError(null);
       try {
         await Log("frontend", "debug", "page", `Loading Priority Inbox (n=${priorityLimit}, type=${filter})`);
-        // Since the server API limit is max 10, we fetch page 1 and page 2 sequentially if limit > 10
+        
         let combined = [];
         const res1 = await fetchNotifications({ page: 1, limit: 10, type: filter });
         if (!active) return;
@@ -84,7 +80,8 @@ export function NotificationsPage() {
           const res2 = await fetchNotifications({ page: 2, limit: 10, type: filter });
           if (!active) return;
           combined = combined.concat(res2.notifications || []);
-        }        // Filter duplicates (by ID) if any
+        }
+        
         const seenIds = new Set();
         let uniqueList = combined.filter(n => {
           if (seenIds.has(n.ID)) return false;
@@ -92,36 +89,25 @@ export function NotificationsPage() {
           return true;
         });
 
-        // Filter out viewed/read notifications if we only want unread, 
-        // but the specs say "display the top 'n' most important unread notifications first".
-        // This implies unread goes first, then read, or we only display unread.
-        // Let's sort all notifications such that:
-        // 1. Unread notifications go first, then read notifications.
-        // 2. Within each group (unread/read), sort by Weight (Placement > Result > Event).
-        // 3. Within equal weights, sort by Timestamp (recency descending).
         uniqueList.sort((a, b) => {
           const isReadA = viewedIds.includes(a.ID);
           const isReadB = viewedIds.includes(b.ID);
 
-          // 1. Unread first
           if (isReadA !== isReadB) {
             return isReadA ? 1 : -1;
           }
 
-          // 2. Weight comparison
           const weightA = typeWeights[String(a.Type).toLowerCase()] || 0;
           const weightB = typeWeights[String(b.Type).toLowerCase()] || 0;
           if (weightA !== weightB) {
             return weightB - weightA;
           }
 
-          // 3. Recency comparison
           const dateA = new Date(a.Timestamp.replace(" ", "T"));
           const dateB = new Date(b.Timestamp.replace(" ", "T"));
           return dateB - dateA;
         });
 
-        // Slice to the requested top "n" limit
         setPriorityNotifications(uniqueList.slice(0, priorityLimit));
         await Log("frontend", "info", "page", `Computed top ${priorityLimit} priority notifications.`);
       } catch (err) {
@@ -145,7 +131,7 @@ export function NotificationsPage() {
 
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
-    setPage(1); // Reset page to 1 on filter change
+    setPage(1);
     Log("frontend", "info", "component", `Filter changed to ${newFilter}`);
   };
 
@@ -180,7 +166,6 @@ export function NotificationsPage() {
     Log("frontend", "info", "state", "Marked all visible notifications as read.");
   };
 
-  // Calculate unread count among currently visible notifications
   const activeNotifications = activeTab === 0 ? notifications : priorityNotifications;
   const currentUnreadList = activeNotifications.filter(n => !viewedIds.includes(n.ID));
   const unreadCount = currentUnreadList.length;
@@ -188,9 +173,9 @@ export function NotificationsPage() {
   const showLoading = activeTab === 0 ? loading : priorityLoading;
   const showErr = activeTab === 0 ? error : priorityError;
   const showList = activeTab === 0 ? notifications : priorityNotifications;
+
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", px: 2, py: 4 }}>
-      {/* Header section */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "flex-start", sm: "center" }}
@@ -226,7 +211,6 @@ export function NotificationsPage() {
 
       <Divider sx={{ mb: 3 }} />
 
-      {/* Tabs Menu */}
       <Paper elevation={0} variant="outlined" sx={{ borderRadius: 3, mb: 3, p: 0.5 }}>
         <Tabs
           value={activeTab}
@@ -249,7 +233,6 @@ export function NotificationsPage() {
         </Tabs>
       </Paper>
 
-      {/* Filtering and n-select configurations */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -280,28 +263,24 @@ export function NotificationsPage() {
         )}
       </Stack>
 
-      {/* Loading Progress */}
       {showLoading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress size={48} thickness={4.5} />
         </Box>
       )}
 
-      {/* Errors display */}
       {!showLoading && showErr && (
         <Alert severity="error" sx={{ borderRadius: 2, mb: 3 }}>
           Failed to load notifications: {showErr}
         </Alert>
       )}
 
-      {/* Empty State */}
       {!showLoading && !showErr && showList.length === 0 && (
         <Alert severity="info" sx={{ borderRadius: 2 }}>
           No notifications found matching your selection.
         </Alert>
       )}
 
-      {/* Notifications List */}
       {!showLoading && !showErr && showList.length > 0 && (
         <Stack spacing={2}>
           {showList.map((n) => (
@@ -315,7 +294,6 @@ export function NotificationsPage() {
         </Stack>
       )}
 
-      {/* Pagination (Only for All Feed tab) */}
       {activeTab === 0 && !showLoading && !showErr && showList.length > 0 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <Pagination

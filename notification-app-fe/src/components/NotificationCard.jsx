@@ -26,10 +26,6 @@ const typeConfig = {
   },
 };
 
-/**
- * Beautiful notification item card using Material UI.
- * Shows type-specific colors, icons, read/unread states, and click actions.
- */
 export function NotificationCard({ notification, isRead, onToggleRead }) {
   const { ID, Type, Message, Timestamp } = notification;
   const config = typeConfig[Type] || {
@@ -56,7 +52,6 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
       }}
     >
       <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        {/* Type Icon Container */}
         <Box
           sx={{
             display: "flex",
@@ -72,7 +67,6 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
           {config.icon}
         </Box>
 
-        {/* Content */}
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
             <Chip
@@ -99,7 +93,6 @@ export function NotificationCard({ notification, isRead, onToggleRead }) {
           </Typography>
         </Box>
 
-        {/* Read / Unread Action */}
         <Box sx={{ flexShrink: 0 }}>
           <Tooltip title={isRead ? "Mark as Unread" : "Mark as Read"}>
             <IconButton onClick={() => onToggleRead(ID)} size="small" color={isRead ? "default" : "primary"}>
