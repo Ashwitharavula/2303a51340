@@ -74,25 +74,17 @@ export function NotificationsPage() {
       setPriorityError(null);
       try {
         await Log("frontend", "debug", "page", `Loading Priority Inbox (n=${priorityLimit}, type=${filter})`);
-        
-        // Since API limit is max 10, to display 15 or 20 we fetch multiple pages in parallel
-        const pagesToFetch = priorityLimit > 10 ? [1, 2] : [1];
-        
-        const fetchPromises = pagesToFetch.map(p => 
-          fetchNotifications({ page: p, limit: 10, type: filter })
-        );
-        
-        const results = await Promise.all(fetchPromises);
-        
-        if (!active) return;
-
-        // Combine items from fetched pages
+        // Since the server API limit is max 10, we fetch page 1 and page 2 sequentially if limit > 10
         let combined = [];
-        results.forEach(res => {
-          combined = combined.concat(res.notifications || []);
-        });
+        const res1 = await fetchNotifications({ page: 1, limit: 10, type: filter });
+        if (!active) return;
+        combined = combined.concat(res1.notifications || []);
 
-        // Filter duplicates (by ID) if any
+        if (priorityLimit > 10) {
+          const res2 = await fetchNotifications({ page: 2, limit: 10, type: filter });
+          if (!active) return;
+          combined = combined.concat(res2.notifications || []);
+        }        // Filter duplicates (by ID) if any
         const seenIds = new Set();
         let uniqueList = combined.filter(n => {
           if (seenIds.has(n.ID)) return false;
